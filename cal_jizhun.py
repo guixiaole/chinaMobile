@@ -6,15 +6,16 @@ import re
 
 from pandas import DataFrame
 
-share_price = [1, 1, 0.7, 0.6]
+share_price = [1, 1, 0.7, 0.6, 0.6, 0.6, 0.6]
 #
 tie_ta_ji_zhun = pd.read_excel('C://Users//gxl//Desktop//中国移动//铁塔计费价格.xlsx', sheet_name=[0, 1, 2, 3])
 # order_dao_chu = pd.read_excel('C://Users//gxl//Desktop//中国移动//订单清查_导出表.xlsx', converters={'站址编码': str}).values
-order_dao_chu = pd.read_excel('C://Users//gxl//Desktop//中国移动//2021423//订单清查_20210423085741.xlsx')
+order_dao_chu = pd.read_excel('C://Users//gxl//Desktop//中国移动//202164//订单清查截止6月3日.xlsx')
 
-wu_li_qingcha = pd.read_excel('C://Users//gxl//Desktop//中国移动//2021423//物理清查_20210423085813.xlsx',
+wu_li_qingcha = pd.read_excel('C://Users//gxl//Desktop//中国移动//202164//物理清查截止6月3日.xlsx',
                               converters={'站址编码': str}).values
-chanpinguagao = pd.read_excel('C://Users//gxl//Desktop//中国移动//塔类产品服务费结算详单.xlsx')
+chanpinguagao = pd.read_excel('C://Users//gxl//Desktop//中国移动//202164//塔类产品服务费结算详单-移动 .xlsx')
+
 
 
 def jizhun():
@@ -98,11 +99,11 @@ def getorder_guagao():
     wu_li_qingcha_len = len(wu_li_qingcha)
     order_dao_chu_len = len(order_dao_chu.values)
     flag = 0
-    for i in range(wu_li_qingcha_len):
+    for i in range(1,wu_li_qingcha_len):
         if wu_li_qingcha[i][3] == wu_li_qingcha[i][3] and wu_li_qingcha[i][21] == wu_li_qingcha[i][21]:
             temp = wu_li_qingcha[i][21].split('、')[0]
             if temp in tie_ta_map.keys():
-                res_tieta_jizhun[str(wu_li_qingcha[i][3])] = tie_ta_map[temp]
+                res_tieta_jizhun[str(int(wu_li_qingcha[i][3]))] = tie_ta_map[temp]
 
     return res_tieta_jizhun
 
@@ -113,15 +114,16 @@ def getchanpinqingdan():
     chanpin = chanpinguagao.values
     chanpin_len = len(chanpin)
     for i in range(chanpin_len):
-        if chanpin[i][7] == chanpin[i][7] and chanpin[i][27] == chanpin[i][27] and chanpin[i][11] == chanpin[i][11]:
-            if chanpin[i][27] == '-':
+        if chanpin[i][7] == chanpin[i][7] and chanpin[i][14] == chanpin[i][14] and chanpin[i][11] == chanpin[i][11]:
+            print(type(chanpin[i][14]))
+            if chanpin[i][14] == '-' or chanpin[i][14] == '0.0':
                 temp = chanpin[i][11]
             else:
-                temp = str(chanpin[i][11]) + str(chanpin[i][27])
+                temp = str(chanpin[i][11]) + str(chanpin[i][14])
             if temp in tie_ta_map.keys():
-                res_chanpin_guagao[str(chanpin[i][7])] = tie_ta_map[temp]
+                res_chanpin_guagao[str(int(chanpin[i][7]))] = tie_ta_map[temp]
             else:
-                res_chanpin_guagao[str(chanpin[i][7])] = 0.0
+                res_chanpin_guagao[str(int(chanpin[i][7]))] = 0.0
     return res_chanpin_guagao
 
 
@@ -140,7 +142,9 @@ if __name__ == '__main__':
     wuli_guagao = getorder_guagao()
     order = order_dao_chu.values
     order_len = len(order)
-    for i in range(27, order_len):
+    for i in range(1, order_len):
+        if i>=34:
+            print(i)
         if order[i][2] == order[i][2] and order[i][6] == order[i][6] and order[i][8] == order[i][8] and order[i][10] == \
                 order[i][10] and order[i][17] == order[i][17] and order[i][16] == order[i][16]:
             if order[i][9] == order[i][9] and order[i][11] == order[i][11] and order[i][12] == order[i][12] and \
@@ -152,54 +156,65 @@ if __name__ == '__main__':
                 temp = str(order[i][17]).split('（')[0]
                 xianchang_index = str(order[i][16]) + temp
                 #  站址编码中的索引
-                zhanzhibianma = str(order[i][2])
+
+                zhanzhibianma = str(int(order[i][2])).split('.')[0]
                 # 按照一个一个的来
                 # 移动核算塔类基准价格
                 if zhanzhibianma in wuli_guagao.keys() and xianchang_index in jifang.keys() and \
-                    zhanzhibianma in chanpinguagao.keys() and order_index in jifang.keys() and \
-                        xianchang_index in peitao.keys() and order_index in peitao.keys():
+                        zhanzhibianma in chanpinguagao.keys() and order_index in jifang.keys() and \
+                        xianchang_index in peitao.keys() and order_index in peitao.keys() and order[i][19] == order[i][
+                    19] \
+                        and order[i][20] == order[i][20] and order[i][12] == order[i][12] and order[i][11] == order[i][
+                    11]:
                     print(i)
-                    mobile_guagao = wuli_guagao[zhanzhibianma]
-                    order_dao_chu['移动核算塔类基准价格'][i] = mobile_guagao
-                    # 铁塔账单塔类基准价格
-                    order_guagao = chanpinguagao[zhanzhibianma]
-                    order_dao_chu['铁塔账单塔类基准价格'][i] = order_guagao
-                    # 铁塔账单机房基准价格
-                    order_jifang = jifang[order_index]
-                    order_dao_chu['铁塔账单机房基准价格'][i] = order_jifang
-                    # 移动核算机房基准价格
-                    mobile_jifang = jifang[xianchang_index]
-                    order_dao_chu['移动核算机房基准价格'][i] = mobile_jifang
-                    # 移动核算配套基准价格
-                    mobile_peitao = peitao[xianchang_index]
-                    order_dao_chu['移动核算配套基准价格'][i] = mobile_peitao
-                    # 铁塔账单配套基准价格
-                    order_peitao = peitao[order_index]
-                    order_dao_chu['铁塔账单配套基准价格'][i] = order_peitao
-                    # 移动按共享核算后塔类价格
-                    share_mobile_guagao = mobile_guagao * share_price[len(order[i][18].split('+'))]
-                    order_dao_chu['移动按共享核算后塔类价格'][i] = share_mobile_guagao
-                    # 铁塔账单塔类共享核算后塔类价格
-                    share_order_guagao = order_guagao * share_price[int(order[i][9])]
-                    order_dao_chu['铁塔账单塔类共享核算后塔类价格'][i] = share_order_guagao
-                    # 共享后机房移动价格
-                    share_mobile_jifang = mobile_jifang * share_price[len(order[i][19].split('+'))]
-                    order_dao_chu['共享后机房移动价格'][i] = share_mobile_jifang
-                    # 铁塔账单共享后基准价
-                    share_order_jifang = order_jifang * share_price[int(order[i][11])]
-                    order_dao_chu['铁塔账单共享后基准价'][i] = share_order_jifang
-                    # 共享后配套移动价格
-                    share_mobile_peitao = mobile_peitao * share_price[len(order[i][20].split('+'))]
-                    order_dao_chu['共享后配套移动价格'][i] = share_mobile_peitao
-                    # 铁塔账单配套共享后基准价
-                    share_order_peitao = order_peitao * share_price[int(order[i][12])]
-                    order_dao_chu['铁塔账单配套共享后基准价'][i] = share_order_peitao
-                    # 总体差异金额
-                    mobile_all = (
+                    try:
+                        mobile_guagao = wuli_guagao[zhanzhibianma]
+                        if i >= 368:
+                            print(i)
+                            print(order[i][19])
+                        order_dao_chu['移动核算塔类基准价格'][i] = mobile_guagao
+                        # 铁塔账单塔类基准价格
+                        order_guagao = chanpinguagao[zhanzhibianma]
+                        order_dao_chu['铁塔账单塔类基准价格'][i] = order_guagao
+                        # 铁塔账单机房基准价格
+
+                        order_jifang = jifang[order_index]
+                        order_dao_chu['铁塔账单机房基准价格'][i] = order_jifang
+                        # 移动核算机房基准价格
+                        mobile_jifang = jifang[xianchang_index]
+                        order_dao_chu['移动核算机房基准价格'][i] = mobile_jifang
+                        # 移动核算配套基准价格
+                        mobile_peitao = peitao[xianchang_index]
+                        order_dao_chu['移动核算配套基准价格'][i] = mobile_peitao
+                        # 铁塔账单配套基准价格
+                        order_peitao = peitao[order_index]
+                        order_dao_chu['铁塔账单配套基准价格'][i] = order_peitao
+                        # 移动按共享核算后塔类价格
+                        share_mobile_guagao = mobile_guagao * share_price[len(order[i][18].split('+'))]
+                        order_dao_chu['移动按共享核算后塔类价格'][i] = share_mobile_guagao
+                        # 铁塔账单塔类共享核算后塔类价格
+                        share_order_guagao = order_guagao * share_price[int(order[i][9])]
+                        order_dao_chu['铁塔账单塔类共享核算后塔类价格'][i] = share_order_guagao
+                        # 共享后机房移动价格
+                        share_mobile_jifang = mobile_jifang * share_price[len(order[i][19].split('+'))]
+                        order_dao_chu['共享后机房移动价格'][i] = share_mobile_jifang
+                        # 铁塔账单共享后基准价
+                        share_order_jifang = order_jifang * share_price[int(order[i][11])]
+                        order_dao_chu['铁塔账单共享后基准价'][i] = share_order_jifang
+                        # 共享后配套移动价格
+                        share_mobile_peitao = mobile_peitao * share_price[len(order[i][20].split('+'))]
+                        order_dao_chu['共享后配套移动价格'][i] = share_mobile_peitao
+                        # 铁塔账单配套共享后基准价
+                        share_order_peitao = order_peitao * share_price[int(order[i][12])]
+                        order_dao_chu['铁塔账单配套共享后基准价'][i] = share_order_peitao
+                        # 总体差异金额
+                        mobile_all = (
                                 mobile_peitao + mobile_jifang + mobile_guagao + share_mobile_guagao + share_mobile_jifang + share_mobile_peitao)
-                    order_all = (
+                        order_all = (
                                 order_jifang + order_peitao + order_guagao + share_order_guagao + share_order_jifang + share_order_peitao)
-                    all_minus = mobile_all - order_all
-                    order_dao_chu['总体差异金额'][i] = all_minus
+                        all_minus = mobile_all - order_all
+                        order_dao_chu['总体差异金额'][i] = all_minus
+                    except RuntimeError:
+                        print("====")
     print(order_dao_chu)
-    DataFrame(order_dao_chu).to_excel('C://Users//gxl//Desktop//中国移动//2021423//订单清查_导出.xlsx', index=False, header=True)
+    DataFrame(order_dao_chu).to_excel('C://Users//gxl//Desktop//中国移动//202164//订单清查_导出.xlsx', index=False, header=True)
